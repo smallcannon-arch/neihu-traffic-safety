@@ -1807,6 +1807,7 @@ html.mob #dyP{border-left:0;border-top:4px solid #F4C2CC}
 .L.so{background:#BCD9F0;border:1.5px solid #4A8BCB}
 #dyH{background:rgba(249,211,180,.96);border:1px solid #E9B48A}
 html.mob #dyT .rdt summary{border-color:#D5CCEE}
+html[data-scn=am] #bS button.on{background:#BFE3D0;border-color:#5FAE87;box-shadow:0 0 0 1px #5FAE87}html[data-scn=am] #dyInfo>b{background:#BFE3D0}
 </style>
 <div id="dy"><div id="dyL"></div><div id="dyH"></div>
 <div id="dyN"><svg viewBox="-30 -30 60 60" width="100%" height="100%"><circle r="28" fill="#fbfaf7" stroke="#cfcbc1"/><g id="dyNeedle"><path d="M0 -21 L7 5 L0 1 L-7 5 Z" fill="#2E3A55"/><text id="dyNT" x="0" y="20" font-size="12" font-weight="700" text-anchor="middle" fill="#2E3A55">北</text></g></svg></div>
@@ -1927,6 +1928,7 @@ const Q=new URLSearchParams(location.search),CAP=Q.get('capture')==='1';
 ['side','tools','menu','hint'].forEach(id=>{const e=document.getElementById(id);if(e)e.innerHTML=''});   // 原立體圖的清單與按鈕不需要，清掉
 const MU=1/K;                                   // 1 公尺 = MU 個 U
 const COL={walk:'#1FAE6C',car:'#3F6FBF',visit:'#E0584C',res:'#4A8BCB',pick:'#9DBBE8'};
+const COLP={walk:'#C4701C',car:'#7B61C4',res:'#C2691A'};let scn0='am';const cs=k=>scn0==='pm'?COLP[k]:COL[k];
 scene.background=new THREE.Color('#f1efe9');scene.fog=null;
 /* 1. 校園模型：保留色相但降彩度（仍比外圍鮮明） */
 {const seen=new Set();scene.traverse(o=>{if(!o.isMesh)return;(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{if(!m||!m.color||seen.has(m))return;seen.add(m);const h={};m.color.getHSL(h);m.color.setHSL(h.h,h.s*.5,Math.min(.93,h.l*.62+.33))})})}
@@ -2058,12 +2060,12 @@ function place(){const W=innerWidth,H=innerHeight,em=EM;labs.forEach(o=>{const o
   document.getElementById('dyH').style.display=isR()?'':'none';document.getElementById('dyC').style.display=zNow>.2?'':'none'}
 /* 8. 每一格的更新 */
 function update(){const s=scn,am=s==='am',pm=s==='pm',ap=am||pm,c=zNow<.5;
-  const st=s==='base'||s==='all';mWalk.visible=mWalkH.visible=ap||st;mPick.visible=ap||st;mMeal.visible=s==='meal';mCarAll.visible=st;mVis.visible=mVisH.visible=s==='visit';mVisO.visible=mVisHO.visible=s==='all';mZone.visible=s==='visit'||s==='all';
+  const st=s==='base'||s==='all';scn0=s;mWalk.material.color.set(cs('walk'));mWalkH.material.color.set(cs('walk'));mRoute.material.color.set(cs('res'));mWalk.visible=mWalkH.visible=ap||st;mPick.visible=ap||st;mMeal.visible=s==='meal';mCarAll.visible=st;mVis.visible=mVisH.visible=s==='visit';mVisO.visible=mVisHO.visible=s==='all';mZone.visible=s==='visit'||s==='all';
   {const k=Math.min(1,Math.max(0,(zNow-.3)/.3));liM.forEach(m=>{m.visible=k>0;m.material.color.copy(GC).lerp(m.userData.c,k)})}
-  mRoute.visible=ap&&zNow>.3;mRoute.material.opacity=.55*Math.min(1,(zNow-.3)/.3);discs.forEach(d=>{d.visible=zNow>.3&&!(MOB||TOUCH);d.material.opacity=.82*Math.min(1,(zNow-.3)/.3)});
+  mRoute.visible=ap&&zNow>.3;mRoute.material.opacity=(pm?.92:.55)*Math.min(1,(zNow-.3)/.3);discs.forEach(d=>{d.visible=zNow>.3&&!(MOB||TOUCH);d.material.opacity=.82*Math.min(1,(zNow-.3)/.3)});
   used=0;DBG=[];const r=camDist*(c?.0062:.0042)/(MOB?MF*.8:1);
-  if(ap&&!c)pRes.forEach((p,i)=>flow(p,T,100,250,pm,r*1.15,COL.res,0,p.rem));
-  if(ap&&c){pWalk.forEach((p,i)=>flow(p,T,6,15,pm,r,COL.walk,i*5));flow(pPick,T,7,35,false,r,COL.car,0)}
+  if(ap&&!c)pRes.forEach((p,i)=>flow(p,T,100,250,pm,r*1.15,cs('res'),0,p.rem));
+  if(ap&&c){pWalk.forEach((p,i)=>flow(p,T,6,15,pm,r,cs('walk'),i*5));flow(pPick,T,7,35,false,r,cs('car'),0)}
   if(s==='meal'&&c)pMeal.forEach((p,i)=>flow(p,T,8,p.L/2,false,r*1.15,COL.car,i*9));
   if(s==='visit'&&c){flow(pVis,T,6,30,false,r*1.15,COL.visit,0)}
   for(let i=used;i<pool.length;i++)pool[i].visible=pool[i].userData.w.visible=false}
@@ -2083,13 +2085,13 @@ fit();addEventListener('resize',fit);addEventListener('orientationchange',()=>se
 if(!document.documentElement.requestFullscreen)document.getElementById('bFull').style.display='none';
 const AR=c=>'<svg width="42" height="16"><path d="M31 8 L12 1 L17 8 L12 15 Z" fill="'+dkc(c)+'" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>';
 function sw(c,w,d){const r=(x,l)=>'<rect x="'+x+'" y="2" width="'+l+'" height="10" fill="'+c+'" stroke="#fff" stroke-width="2"/>';return '<svg width="46" height="14" style="background:#e8edf5;border-radius:2px">'+(d?r(2,12)+r(18,12)+r(34,10):r(1,44))+'</svg>'+w}
-function panel(){const S=DY.scenes[scn],reg=vTo===1;
+function panel(){document.documentElement.dataset.scn=scn;const S=DY.scenes[scn],reg=vTo===1;
   if(ST){document.getElementById('bS').style.display=document.getElementById('bV').style.display='none'}
   document.querySelectorAll('#bS button').forEach(b=>b.classList.toggle('on',b.dataset.s===scn));document.querySelectorAll('#bV button[data-v]').forEach(b=>b.classList.toggle('on',+b.dataset.v===vTo));
   document.getElementById('dyInfo').innerHTML='<b>'+S.name+'</b>'+(reg?'':'<ul>'+S.lines.map(l=>'<li>'+l+'</li>').join('')+'</ul>');
   gF.el.textContent=S.gFront||'';gB.el.textContent=S.gBack||'';
   const lg=[];
-  if(scn==='am'||scn==='pm'){if(reg)lg.push('<div>'+sw(COL.res,'通學來向')+'</div>');else lg.push('<div>'+sw(COL.walk,'行人動線')+'</div>','<div>'+sw(COL.pick,'家長接送區')+'</div>','<div>'+AR(COL.car)+'接送車輛</div>')}
+  if(scn==='am'||scn==='pm'){scn0=scn;if(reg)lg.push('<div>'+sw(cs('res'),'通學來向')+'</div>');else lg.push('<div>'+sw(cs('walk'),'行人動線')+'</div>','<div>'+sw(COL.pick,'家長接送區')+'</div>','<div>'+AR(cs('car'))+'接送車輛</div>')}
   if(scn==='base'||scn==='all')lg.push('<div>'+sw(COL.walk,'行人動線')+'</div>','<div>'+sw(COL.car,'車輛動線',1)+'</div>','<div>'+sw(COL.pick,'家長接送區')+'</div>');if(scn==='all')lg.push('<div>'+sw(COL.visit,'參觀路線')+'</div>');
   if(scn==='meal')lg.push('<div>'+sw(COL.car,'餐車動線',1)+'</div>');if(scn==='visit')lg.push('<div>'+sw(COL.visit,'參觀路線')+'</div>');
   if(scn!=='base'&&scn!=='all')lg.push('<div>'+AR('#6B7894')+'箭頭：行進方向</div>');if(!reg&&scn!=='meal')lg.push('<div>'+sw('#8794AD','虛線：從空橋下方或建築後方通過',1)+'</div>');document.getElementById('dyLg').innerHTML=lg.join('');
