@@ -1744,6 +1744,10 @@ html,body{background:#f1efe9;overflow:hidden}
 #dyC{position:absolute;left:4.8em;bottom:1.2em;font-size:.7em;color:#6b6f76;background:rgba(251,250,247,.85);padding:.1em .5em;border-radius:.2em}
 #dyT h3{margin:7px 0 1px;font-size:15.5px;font-weight:700;color:#6b6f76;letter-spacing:1px}
 #dyT .row.sr{grid-template-columns:auto 1fr}
+.L.stn.up{transform:translate(-50%,calc(-155% - 2.4em))}.L.stn.lf{transform:translate(calc(-100% - 3.4em),-50%)}
+.L.stn.up::after,.L.stn.lf::after{content:'';position:absolute;background:#c8402a;box-shadow:0 0 0 1px #fff}
+html.ph .L.stn.up{transform:translate(-50%,-155%)}html.ph .L.stn.up::after{display:none}
+.L.stn.up::after{left:calc(50% - 1px);top:calc(100% + .13em);width:2px;height:2.1em}.L.stn.lf::after{left:calc(100% + .13em);top:calc(50% - 1px);height:2px;width:2em}
 .L.pt.og,.dn.og{font-weight:800;text-shadow:0 0 1px #6b3a00,0 0 2px #6b3a00,0 1px 2px #6b3a00,0 -1px 2px #6b3a00,1px 0 2px #6b3a00,-1px 0 2px #6b3a00}
 #dyT.dense .row{padding:1px 0}#dyT.dense .dn{width:27px;height:27px;font-size:15.5px}#dyT.dense h3{margin:4px 0 0}
 .sb{background:#c8402a;color:#fff;font-weight:700;border-radius:6px;padding:3px 9px;font-size:16px;white-space:nowrap;line-height:1.3}
@@ -1988,7 +1992,7 @@ lab('公車站','tx',RG.bus[0],3,()=>isC()&&/^(am|pm|base|all)$/.test(scn),[2.2,
 TM.points.forEach(p=>{if(!p.pos)return;const tx={'情':'操場交通情境區','街':'老街口'}[p.no];
   if(tx)lab(tx,'tx',p.pos,3,()=>isC()&&(p.no==='情'?!/^(visit|all)$/.test(scn):inS(p.no)),p.no==='情'?[3,-1.3]:[0,1.5]);
   else{const g=(DY.groups.find(x=>x[1].indexOf(p.no)>=0)||[])[0],o=lab(p.no,'pt'+(g===DY.gog?' og':''),p.pos,3,()=>isC()&&inS(p.no));if(DY.gcol[g])o.el.style.background=DY.gcol[g];o.offM={'5':[0,.95],'6':[0,-.95]}[p.no]}
-  if(p.station)lab('第 '+p.station+' 站'+(p.station===2?'　操場交通情境區':''),'stn'+(p.station===3?' lf':''),p.pos,3,()=>isC()&&(scn==='visit'||scn==='all'))});
+  if(p.station)lab('第 '+p.station+' 站'+(p.station===2?'　操場交通情境區':''),'stn'+(p.station===3?' lf':p.station===1?' up':''),p.pos,3,()=>isC()&&(scn==='visit'||scn==='all'))});
 const gF=lab('','gd',[1055,1452],3,()=>isC()&&!!DY.scenes[scn].gFront,[-4.6,-1.9]),gB=lab('','gd',[1012,323],3,()=>isC()&&!!DY.scenes[scn].gBack,[-4.2,0]);
 Object.keys(RG.labels).forEach(k=>{const m=DY.roads[k];if(RG.labels[k]&&m)lab(m[0],'rd',RG.labels[k],.5,isR,m[1]).noT=k==='鹽港溪'});
 /* 里的標籤：DY.li[里名]={n 人數, sub 第二層小字, pos 位置(U 座標，省略則用里的中心), off 偏移(em)} */
