@@ -1995,10 +1995,11 @@ const mZone=(()=>{const Z=eval('['+TM.zone+']');const m=new THREE.Mesh(new THREE
 function mkPath(u){const p=u.map(P),cum=[0];for(let i=1;i<p.length;i++)cum.push(cum[i-1]+Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]));return{p,cum,L:cum[cum.length-1]}}
 function at(path,s){const c=path.cum;let i=1;while(i<c.length-1&&c[i]<s)i++;const t=(s-c[i-1])/Math.max(c[i]-c[i-1],1e-6);return[path.p[i-1][0]+(path.p[i][0]-path.p[i-1][0])*t,path.p[i-1][1]+(path.p[i][1]-path.p[i-1][1])*t]}
 const dotGeo=new THREE.CircleGeometry(1,20),pool=[];let used=0;
-function dot(x,z,r,color,ring){let m=pool[used];if(!m){m=new THREE.Mesh(dotGeo,bm(color,{depthTest:false}));m.rotation.x=-Math.PI/2;m.renderOrder=9700;scene.add(m);const w=new THREE.Mesh(dotGeo,bm('#ffffff',{depthTest:false}));w.rotation.x=-Math.PI/2;w.renderOrder=9690;scene.add(w);m.userData.w=w;pool.push(m)}
+let DBG=[],TAG='';
+function dot(x,z,r,color,ring){DBG.push([TAG,x,z,r]);let m=pool[used];if(!m){m=new THREE.Mesh(dotGeo,bm(color,{depthTest:false}));m.rotation.x=-Math.PI/2;m.renderOrder=9700;scene.add(m);const w=new THREE.Mesh(dotGeo,bm('#ffffff',{depthTest:false}));w.rotation.x=-Math.PI/2;w.renderOrder=9690;scene.add(w);m.userData.w=w;pool.push(m)}
   used++;m.visible=m.userData.w.visible=true;m.material.color.set(color);m.position.set(x,2.2,z);m.scale.set(r,r,1);m.userData.w.position.set(x,2.15,z);m.userData.w.scale.set(r*1.45,r*1.45,1)}
-function flow(path,T,speed,gap,rev,r,color,phase){if(path.L<1)return;const n=Math.max(1,Math.round(path.L/gap)),g=path.L/n;for(let k=0;k<n;k++){let s=((T*speed+(phase||0))%g+g)%g+k*g;if(rev)s=path.L-s;const q=at(path,Math.min(Math.max(s,0),path.L));dot(q[0],q[1],r,color)}}
-const pRes=RG.res.concat([RG.south]).filter(r=>r.route.length>1).map(r=>mkPath(r.route)),pWalk=WALK.map(mkPath),pMeal=[CARS[0],CARS[2]].map(mkPath),pVis=mkPath(VIS),pPick=mkPath(PICK);
+function flow(path,T,speed,gap,rev,r,color,phase,minL){if(path.L<1||path.L<(minL||0))return;const f=Math.max(.01,Math.min(gap*.3,path.L*.3)),s0=((T*speed+(phase||0))%gap+gap)%gap;for(let k=0;s0+k*gap<path.L;k++){const s=s0+k*gap,a=Math.min(1,s/f,(path.L-s)/f);if(a<.03)continue;const q=at(path,rev?path.L-s:s);TAG=path.id;dot(q[0],q[1],r*Math.sqrt(a),color)}}
+const pRes=RG.res.concat([RG.south]).filter(r=>r.route.length>1).map(r=>mkPath(r.route)),pWalk=WALK.map(mkPath),pMeal=[CARS[0],CARS[2]].map(mkPath),pVis=mkPath(VIS),pPick=mkPath(PICK);pRes.forEach((p,i)=>p.id='R'+i);pWalk.forEach((p,i)=>p.id='W'+i);pMeal.forEach((p,i)=>p.id='M'+i);pVis.id='V';pPick.id='K';
 /* 6. 鏡頭：全區（z=1）與校園周邊（z=0）連續變化 */
 const tC=new THREE.Vector3(-2,0,-3),tR=(()=>{const q=P(RG.center);return new THREE.Vector3(q[0],0,q[1])})(),dir=new THREE.Vector3(.02,.86,.51).normalize(),dC=285,dR=7000,tgt=new THREE.Vector3();
 /* 觸控：單指拖曳旋轉，雙指縮放與平移；換情境或視角時歸零 */
@@ -2053,11 +2054,11 @@ function update(){const s=scn,am=s==='am',pm=s==='pm',ap=am||pm,c=zNow<.5;
   const st=s==='base'||s==='all';mWalk.visible=mWalkH.visible=ap||st;mPick.visible=ap||st;mMeal.visible=s==='meal';mCarAll.visible=st;mVis.visible=mVisH.visible=s==='visit';mVisO.visible=mVisHO.visible=s==='all';mZone.visible=s==='visit'||s==='all';
   {const k=Math.min(1,Math.max(0,(zNow-.3)/.3));liM.forEach(m=>{m.visible=k>0;m.material.color.copy(GC).lerp(m.userData.c,k)})}
   mRoute.visible=ap&&zNow>.3;mRoute.material.opacity=.55*Math.min(1,(zNow-.3)/.3);discs.forEach(d=>{d.visible=zNow>.3&&!(MOB||TOUCH);d.material.opacity=.82*Math.min(1,(zNow-.3)/.3)});
-  used=0;const r=camDist*(c?.0062:.0042)/(MOB?MF*.8:1);
-  if(ap&&!c)pRes.forEach((p,i)=>flow(p,T,95,260,pm,r,COL.res,i*37));
-  if(ap&&c){pWalk.forEach((p,i)=>flow(p,T,9,26,pm,r,COL.walk,i*5));flow(pPick,T,7,34,false,r*.9,COL.car,0)}
+  used=0;DBG=[];const r=camDist*(c?.0062:.0042)/(MOB?MF*.8:1);
+  if(ap&&!c)pRes.forEach((p,i)=>flow(p,T,100,250,pm,r,COL.res,i*37,250));
+  if(ap&&c){pWalk.forEach((p,i)=>flow(p,T,9,22.5,pm,r,COL.walk,i*5));flow(pPick,T,7,35,false,r*.9,COL.car,0)}
   if(s==='meal'&&c)pMeal.forEach((p,i)=>flow(p,T,8,p.L/2,false,r*1.15,COL.car,i*9));
-  if(s==='visit'&&c){const q=at(pVis,(T/12%1)*pVis.L);dot(q[0],q[1],r*1.5,COL.visit)}
+  if(s==='visit'&&c){const s=(T/12%1)*pVis.L,a=Math.max(0,Math.min(1,s/6,(pVis.L-s)/6)),q=at(pVis,s);TAG='V';dot(q[0],q[1],r*1.5*Math.sqrt(a),COL.visit)}
   for(let i=used;i<pool.length;i++)pool[i].visible=pool[i].userData.w.visible=false}
 const _render=renderer.render.bind(renderer);let last=performance.now();
 renderer.render=function(sc,cam){const now=performance.now();if(!CAP){if(playing)T+=Math.min(.1,(now-last)/1000);last=now;setCam(now/1000)}else setCam(T);update();_render(sc,cam);place()};
@@ -2106,7 +2107,7 @@ addEventListener('keydown',e=>{if(e.ctrlKey||e.altKey||e.metaKey)return;const k=
   else if(k>='1'&&k<='4'){setScene(['am','pm','meal','visit'][+k-1])}
   else if(k==='v'||k==='V'){setView(vTo===1?0:1)}});
 scn=Q.get('scene')||'am';setView(Q.get('view')==='campus'||scn==='meal'||scn==='visit'?0:1,true);if(Q.get('t'))T=+Q.get('t');panel();
-window.__dy={setT(t){T=t;renderer.render(scene,camera)},setScene,setView,get z(){return zNow},get scene(){return scn},get playing(){return playing},get view(){return vTo}};
+window.__dy={get dbg(){return DBG.map(d=>[d[0],+d[1].toFixed(2),+d[2].toFixed(2),+d[3].toFixed(3)])},get lens(){const o={};pRes.concat(pWalk,pMeal,[pVis,pPick]).forEach(p=>o[p.id]=+p.L.toFixed(1));return o},setT(t){T=t;renderer.render(scene,camera)},setScene,setView,get z(){return zNow},get scene(){return scn},get playing(){return playing},get view(){return vTo}};
 })();
 </script>
 
